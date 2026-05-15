@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definitions
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Identity verification
+    function isVerifiedUser() { 
+      return isSignedIn() && request.auth.token.email_verified == true; 
+    }
+
+    // --- 1. USERS COLLECTION ---
+    function isValidUser(data) {
+      return data.uid == request.auth.uid 
+        && data.role in ['Farmer', 'Owner']
+        && data.email is string && data.email.size() <= 256
+        && data.keys().hasAll(['uid', 'role', 'email'])
+        && data.keys().size() <= 10;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId);
+      // Public profile view for others (limited fields)
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isVerifiedUser() && isValidId(userId) && isValidUser(incoming());
+      allow update: if isVerifiedUser() && isValidUser(incoming()) 
+        && incoming().uid == existing().uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phoneNumber', 'location']);
+    }
+
+    // --- 2. MACHINES COLLECTION ---
+    function isValidMachine(data) {
+      return data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() <= 128
+        && data.category in ['Tractor', 'Harvester', 'Sprayer', 'Power Tiller']
+        && data.hourlyRate is number && data.hourlyRate > 0 && data.hourlyRate <= 20000
+        && data.dailyRate is number && data.dailyRate > 0 && data.dailyRate <= 200000
+        && data.keys().hasAll(['id', 'ownerId', 'name', 'category', 'hourlyRate', 'dailyRate'])
+        && data.keys().size() <= 15;
+    }
+
+    match /machines/{machineId} {
+      allow read: if true; // Publicly searchable
+      
+      allow create: if isVerifiedUser() && isValidId(machineId) && isValidMachine(incoming());
+      allow update: if isVerifiedUser() && isValidMachine(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (
+          // Action: Update details
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'hourlyRate', 'dailyRate', 'available', 'condition', 'imageUrl', 'description', 'location'])
+          || 
+          // Action: Toggle availability (e.g. system book)
+          incoming().diff(existing()).affectedKeys().hasOnly(['available'])
+        );
+      allow delete: if isVerifiedUser() && existing().ownerId == request.auth.uid;
+    }
+
+    // --- 3. BOOKINGS COLLECTION ---
+    function isValidBooking(data) {
+      return data.farmerId == request.auth.uid
+        && isValidId(data.machineId)
+        && data.status == 'Pending' // Initial state
+        && data.totalAmount is number && data.totalAmount > 0
+        && data.keys().hasAll(['id', 'machineId', 'farmerId', 'ownerId', 'status', 'totalAmount'])
+        && data.keys().size() <= 15;
+    }
+
+    match /bookings/{bookingId} {
+      // Users can only read their own bookings (as farmer or owner)
+      allow get: if isSignedIn() && (resource.data.farmerId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.farmerId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+
+      allow create: if isVerifiedUser() && isValidId(bookingId) && isValidBooking(incoming())
+        && exists(/databases/$(database)/documents/machines/$(incoming().machineId));
+      
+      allow update: if isVerifiedUser() && (
+        // Action: Owner Accepts/Declines
+        (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status']) && incoming().status in ['Accepted', 'Declined', 'Completed'])
+        ||
+        // Action: Farmer Cancels
+        (existing().farmerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status']) && incoming().status == 'Declined')
+      );
+    }
+  }
+}

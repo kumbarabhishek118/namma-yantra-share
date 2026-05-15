@@ -1,0 +1,6 @@
+{
+  "name": "Namma-Yantra Share",
+  "description": "An agriculture machinery rental platform for small farmers and machine owners.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["firebase", "google_maps"]
+}

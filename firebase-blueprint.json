@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier matching Auth UID" },
+        "name": { "type": "string", "description": "Display name, max 100 chars" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Farmer", "Owner"] },
+        "phoneNumber": { "type": "string", "description": "Verified phone number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role", "email"]
+    },
+    "Machine": {
+      "title": "Machine",
+      "description": "Agriculture machinery details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string", "description": "Machine model name, max 128 chars" },
+        "category": { "type": "string", "enum": ["Tractor", "Harvester", "Sprayer", "Power Tiller"] },
+        "hourlyRate": { "type": "number", "description": "Rate between 1 and 20000" },
+        "dailyRate": { "type": "number", "description": "Rate between 1 and 200000" },
+        "available": { "type": "boolean" },
+        "imageUrl": { "type": "string" },
+        "imageUrls": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "Additional photos of the machine"
+        },
+        "condition": { "type": "string" },
+        "distance": { "type": "string", "description": "Distance from user, e.g. '1.5 km'" },
+        "district": { "type": "string", "description": "Location district, e.g. 'Mandya'" },
+        "lastServiceDate": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "category", "hourlyRate", "dailyRate"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Machinery rental booking record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "machineId": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Accepted", "Declined", "Completed"] },
+        "startDate": { "type": "number" },
+        "duration": { "type": "number" },
+        "durationUnit": { "type": "string", "enum": ["Hours", "Days"] },
+        "totalAmount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "machineId", "farmerId", "ownerId", "status", "totalAmount"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/machines/{machineId}": {
+      "schema": "Machine",
+      "description": "Machinery listings"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Rental bookings"
+    }
+  }
+}

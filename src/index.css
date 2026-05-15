@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1B5E20;
+  --color-primary-dark: #0A3D11;
+  --color-secondary: #FBC02D;
+  --color-accent: #E8F5E9;
+  --color-bg-soft: #FDFCF5;
+  --color-card-bg: #FFFFFF;
+  
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  background-color: #FDFCF5;
+  color: #1B5E20;
+}
+
+*, ::after, ::before {
+  border-color: var(--color-border, currentColor);
+}

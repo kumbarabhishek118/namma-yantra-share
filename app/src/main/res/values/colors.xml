@@ -1,0 +1,13 @@
+<resources>
+    <color name="primary">#2E7D32</color> <!-- Green -->
+    <color name="primary_variant">#1B5E20</color>
+    <color name="secondary">#FBC02D</color> <!-- Yellow -->
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#000000</color>
+    <color name="status_pending">#FFC107</color>
+    <color name="status_accepted">#4CAF50</color>
+    <color name="status_declined">#F44336</color>
+    <color name="status_completed">#2196F3</color>
+</resources>

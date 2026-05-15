@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Namma-Yantra Share</string>
+    <string name="welcome_message">Empowering Farmers with Technology</string>
+    <string name="login_title">Login to Namma-Yantra</string>
+    <string name="register_title">Register New Account</string>
+    <string name="farmer">Farmer</string>
+    <string name="owner">Machine Owner</string>
+    <string name="book_now">Book Now</string>
+</resources>
